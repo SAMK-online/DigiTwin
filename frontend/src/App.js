@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled from 'styled-components';
 import Header from './components/Header';
 import Timeline from './components/Timeline';
+import Network from './components/Network';
+import Vulnerabilities from './components/Vulnerabilities';
 import './App.css';
 
 const AppContainer = styled.div`
@@ -28,6 +30,8 @@ function App() {
         <MainContent>
           <Routes>
             <Route path="/" element={<Timeline />} />
+            <Route path="/network" element={<Network />} />
+            <Route path="/vulnerabilities" element={<Vulnerabilities />} />
           </Routes>
         </MainContent>
       </AppContainer>

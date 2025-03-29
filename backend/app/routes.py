@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
 import re
+from .network_analysis import get_network_data
 
 main = Blueprint('main', __name__)
 
@@ -8,6 +9,24 @@ def get_timeline():
     # Extract timeline events from datasource.txt
     timeline_events = extract_timeline_events()
     return jsonify(timeline_events)
+
+@main.route('/api/network', methods=['GET'])
+def get_network():
+    # Get network data for visualization
+    network_data = get_network_data()
+    return jsonify(network_data)
+
+@main.route('/api/network/domestic', methods=['GET'])
+def get_domestic_network():
+    # Get only domestic network data
+    network_data = get_network_data()
+    return jsonify(network_data['domestic_network'])
+
+@main.route('/api/network/international', methods=['GET'])
+def get_international_network():
+    # Get only international network data
+    network_data = get_network_data()
+    return jsonify(network_data['international_network'])
 
 def extract_timeline_events():
     """Extract timeline events from the datasource file"""

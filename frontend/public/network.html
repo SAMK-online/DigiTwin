@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Putin Digital Twin - Network Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #b71c1c;
+      --secondary-color: #2c3e50;
+      --accent-color: #f1c40f;
+      --text-color: #f5f5f5;
+      --background-color: #121212;
+      --card-background: #1e1e1e;
+      --timeline-line-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header {
+      background-color: rgba(18, 18, 18, 0.95);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .logo h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: var(--text-color);
+      font-weight: 700;
+    }
+    
+    .logo span {
+      color: var(--primary-color);
+    }
+    
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    nav a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--primary-color);
+      transition: width 0.3s ease;
+    }
+    
+    nav a:hover {
+      color: var(--primary-color);
+    }
+    
+    nav a:hover::after {
+      width: 100%;
+    }
+    
+    nav a.active::after {
+      width: 100%;
+    }
+    
+    .network-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      animation: fadeIn 1s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .network-header h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-color);
+      font-weight: 700;
+    }
+    
+    .network-header h2 span {
+      color: var(--primary-color);
+    }
+    
+    .network-header p {
+      font-size: 1.2rem;
+      color: rgba(245, 245, 245, 0.8);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    
+    .tab {
+      background-color: var(--card-background);
+      color: var(--text-color);
+      border: none;
+      padding: 0.8rem 2rem;
+      margin: 0 0.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+      background-color: rgba(183, 28, 28, 0.7);
+    }
+    
+    .tab.active {
+      background-color: var(--primary-color);
+    }
+    
+    .graph-container {
+      background-color: var(--card-background);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      height: 700px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid var(--primary-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background-color: rgba(183, 28, 28, 0.2);
+      color: #f5f5f5;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      margin: 2rem 0;
+    }
+    
+    .tooltip {
+      position: absolute;
+      background-color: rgba(30, 30, 30, 0.95);
+      color: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      max-width: 300px;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .tooltip h3 {
+      margin: 0 0 0.5rem 0;
+      color: var(--primary-color);
+      font-size: 1.2rem;
+    }
+    
+    .tooltip-content {
+      font-size: 0.9rem;
+    }
+    
+    .tooltip-content p {
+      margin: 0.3rem 0;
+    }
+    
+    .label {
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .score {
+      display: inline-block;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-left: 0.3rem;
+    }
+    
+    .legend {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 0 1rem;
+      font-size: 0.9rem;
+    }
+    
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">
+        <h1>Putin <span>Digital Twin</span></h1>
+      </div>
+      <nav>
+        <a href="timeline.html">Timeline</a>
+        <a href="network.html" class="active">Network</a>
+        <a href="#">Vulnerabilities</a>
+        <a href="#">Forecast</a>
+      </nav>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="network-header">
+      <h2>Vladimir <span>Putin</span>: Network Analysis</h2>
+      <p>Explore Putin's political and social networks, including key allies and adversaries.
+        Hover over nodes to see details and relationships.</p>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab active" data-network="domestic">Domestic Network</button>
+      <button class="tab" data-network="international">International Network</button>
+    </div>
+    
+    <div class="graph-container">
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+      </div>
+      <svg id="network-graph" width="100%" height="100%" style="display: none;"></svg>
+      <div id="tooltip" class="tooltip"></div>
+    </div>
+    
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #f1c40f;"></div>
+        <span>Vladimir Putin</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #4CAF50;"></div>
+        <span>Allies</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #F44336;"></div>
+        <span>Adversaries</span>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Network data
+    const domesticNetwork = {
+      nodes: [
+        { id: "Vladimir Putin", role: "President of Russia", type: "central", category: "domestic", description: "President of Russia since 2000 (with a break as Prime Minister 2008-2012)", influence_score: 1.0, degree_centrality: 1.0 },
+        // Domestic Allies
+        { id: "Nikolai Patrushev", role: "Security Council Secretary", type: "ally", category: "domestic", description: "Former FSB head, close Putin ally, and key security advisor", influence_score: 0.85, degree_centrality: 0.7 },
+        { id: "Sergei Shoigu", role: "Defense Minister", type: "ally", category: "domestic", description: "Long-serving Defense Minister and trusted Putin ally", influence_score: 0.8, degree_centrality: 0.65 },
+        { id: "Igor Sechin", role: "CEO, Rosneft", type: "ally", category: "domestic", description: "Former deputy chief of staff, powerful 'energy tsar' often dubbed Putin's most trusted ally", influence_score: 0.75, degree_centrality: 0.6 },
+        { id: "Sergei Lavrov", role: "Foreign Minister", type: "ally", category: "domestic", description: "Long-serving Foreign Minister who articulates Putin's foreign policy", influence_score: 0.7, degree_centrality: 0.55 },
+        { id: "Dmitry Medvedev", role: "Former President/PM", type: "ally", category: "domestic", description: "Former President (2008-2012) and Prime Minister, now Deputy Chair of Security Council", influence_score: 0.65, degree_centrality: 0.5 },
+        { id: "Ramzan Kadyrov", role: "Chechen Leader", type: "ally", category: "domestic", description: "Head of Chechen Republic, maintains personal loyalty to Putin", influence_score: 0.6, degree_centrality: 0.45 },
+        { id: "Yury Kovalchuk", role: "Banker", type: "ally", category: "domestic", description: "Billionaire banker/media magnate sometimes called 'Putin's personal banker'", influence_score: 0.55, degree_centrality: 0.4 },
+        { id: "Arkady Rotenberg", role: "Businessman", type: "ally", category: "domestic", description: "Putin's former judo partner; awarded major construction projects", influence_score: 0.5, degree_centrality: 0.35 },
+        { id: "Alexei Miller", role: "CEO, Gazprom", type: "ally", category: "domestic", description: "Head of state gas monopoly Gazprom, St. Petersburg associate of Putin", influence_score: 0.45, degree_centrality: 0.3 },
+        { id: "Mikhail Mishustin", role: "Prime Minister", type: "ally", category: "domestic", description: "Technocrat managing economy under sanctions", influence_score: 0.4, degree_centrality: 0.25 },
+        
+        // Domestic Adversaries
+        { id: "Alexei Navalny", role: "Opposition Leader (deceased)", type: "adversary", category: "domestic", description: "Anti-corruption campaigner and opposition leader who died in custody in 2024", influence_score: 0.7, degree_centrality: 0.4 },
+        { id: "Mikhail Khodorkovsky", role: "Exiled Oligarch", type: "adversary", category: "domestic", description: "Former oil tycoon imprisoned in 2003 and later exiled after challenging Putin", influence_score: 0.5, degree_centrality: 0.3 },
+        { id: "Boris Nemtsov", role: "Opposition Leader (assassinated)", type: "adversary", category: "domestic", description: "Former Deputy PM turned Putin critic, assassinated in 2015", influence_score: 0.45, degree_centrality: 0.25 },
+        { id: "Anna Politkovskaya", role: "Journalist (assassinated)", type: "adversary", category: "domestic", description: "Investigative journalist critical of Putin, shot dead in 2006", influence_score: 0.4, degree_centrality: 0.2 }
+      ],
+      links: [
+        // Allies
+        { source: "Vladimir Putin", target: "Nikolai Patrushev", relationship: "ally", weight: 0.9 },
+        { source: "Vladimir Putin", target: "Sergei Shoigu", relationship: "ally", weight: 0.85 },
+        { source: "Vladimir Putin", target: "Igor Sechin", relationship: "ally", weight: 0.8 },
+        { source: "Vladimir Putin", target: "Sergei Lavrov", relationship: "ally", weight: 0.75 },
+        { source: "Vladimir Putin", target: "Dmitry Medvedev", relationship: "ally", weight: 0.7 },
+        { source: "Vladimir Putin", target: "Ramzan Kadyrov", relationship: "ally", weight: 0.65 },
+        { source: "Vladimir Putin", target: "Yury Kovalchuk", relationship: "ally", weight: 0.6 },
+        { source: "Vladimir Putin", target: "Arkady Rotenberg", relationship: "ally", weight: 0.55 },
+        { source: "Vladimir Putin", target: "Alexei Miller", relationship: "ally", weight: 0.5 },
+        { source: "Vladimir Putin", target: "Mikhail Mishustin", relationship: "ally", weight: 0.45 },
+        
+        // Adversaries
+        { source: "Vladimir Putin", target: "Alexei Navalny", relationship: "adversary", weight: 0.7 },
+        { source: "Vladimir Putin", target: "Mikhail Khodorkovsky", relationship: "adversary", weight: 0.6 },
+        { source: "Vladimir Putin", target: "Boris Nemtsov", relationship: "adversary", weight: 0.5 },
+        { source: "Vladimir Putin", target: "Anna Politkovskaya", relationship: "adversary", weight: 0.4 }
+      ]
+    };
+    
+    const internationalNetwork = {
+      nodes: [
+        { id: "Vladimir Putin", role: "President of Russia", type: "central", category: "international", description: "President of Russia since 2000 (with a break as Prime Minister 2008-2012)", influence_score: 1.0, degree_centrality: 1.0 },
+        // International Allies
+        { id: "Alexander Lukashenko", role: "President of Belarus", type: "ally", category: "international", country: "Belarus", description: "Authoritarian leader of Belarus, close Putin ally who depends on Russian support", influence_score: 0.8, degree_centrality: 0.65 },
+        { id: "Xi Jinping", role: "President of China", type: "ally", category: "international", country: "China", description: "Chinese leader with 'no limits' strategic partnership with Putin", influence_score: 0.9, degree_centrality: 0.75 },
+        { id: "Bashar al-Assad", role: "President of Syria", type: "ally", category: "international", country: "Syria", description: "Syrian leader whose regime was saved by Russian military intervention", influence_score: 0.6, degree_centrality: 0.5 },
+        { id: "Kim Jong-un", role: "Leader of North Korea", type: "ally", category: "international", country: "North Korea", description: "North Korean leader who has strengthened ties with Putin during Ukraine war", influence_score: 0.55, degree_centrality: 0.45 },
+        { id: "Nicolás Maduro", role: "President of Venezuela", type: "ally", category: "international", country: "Venezuela", description: "Venezuelan leader supported by Russia with economic and military aid", influence_score: 0.5, degree_centrality: 0.4 },
+        { id: "Viktor Orbán", role: "Prime Minister of Hungary", type: "ally", category: "international", country: "Hungary", description: "Hungarian leader with friendly ties to Putin despite EU membership", influence_score: 0.45, degree_centrality: 0.35 },
+        
+        // International Adversaries
+        { id: "Joe Biden", role: "President of United States", type: "adversary", category: "international", country: "United States", description: "U.S. President leading Western opposition to Putin's Ukraine invasion", influence_score: 0.85, degree_centrality: 0.7 },
+        { id: "Volodymyr Zelenskyy", role: "President of Ukraine", type: "adversary", category: "international", country: "Ukraine", description: "Ukrainian President leading resistance against Russian invasion", influence_score: 0.75, degree_centrality: 0.6 },
+        { id: "Jens Stoltenberg", role: "NATO Secretary General", type: "adversary", category: "international", country: "NATO", description: "NATO leader coordinating Western military support for Ukraine", influence_score: 0.65, degree_centrality: 0.5 },
+        { id: "Olaf Scholz", role: "Chancellor of Germany", type: "adversary", category: "international", country: "Germany", description: "German leader who halted Nord Stream 2 and shifted to support sanctions", influence_score: 0.6, degree_centrality: 0.45 },
+        { id: "Emmanuel Macron", role: "President of France", type: "adversary", category: "international", country: "France", description: "French President who has confronted Putin over Ukraine", influence_score: 0.55, degree_centrality: 0.4 },
+        { id: "Rishi Sunak", role: "Prime Minister of UK", type: "adversary", category: "international", country: "United Kingdom", description: "British leader continuing UK's hawkish stance toward Russia", influence_score: 0.5, degree_centrality: 0.35 }
+      ],
+      links: [
+        // Allies
+        { source: "Vladimir Putin", target: "Alexander Lukashenko", relationship: "ally", weight: 0.9 },
+        { source: "Vladimir Putin", target: "Xi Jinping", relationship: "ally", weight: 0.95 },
+        { source: "Vladimir Putin", target: "Bashar al-Assad", relationship: "ally", weight: 0.7 },
+        { source: "Vladimir Putin", target: "Kim Jong-un", relationship: "ally", weight: 0.65 },
+        { source: "Vladimir Putin", target: "Nicolás Maduro", relationship: "ally", weight: 0.6 },
+        { source: "Vladimir Putin", target: "Viktor Orbán", relationship: "ally", weight: 0.55 },
+        
+        // Adversaries
+        { source: "Vladimir Putin", target: "Joe Biden", relationship: "adversary", weight: 0.9 },
+        { source: "Vladimir Putin", target: "Volodymyr Zelenskyy", relationship: "adversary", weight: 0.85 },
+        { source: "Vladimir Putin", target: "Jens Stoltenberg", relationship: "adversary", weight: 0.75 },
+        { source: "Vladimir Putin", target: "Olaf Scholz", relationship: "adversary", weight: 0.7 },
+        { source: "Vladimir Putin", target: "Emmanuel Macron", relationship: "adversary", weight: 0.65 },
+        { source: "Vladimir Putin", target: "Rishi Sunak", relationship: "adversary", weight: 0.6 }
+      ]
+    };
+    
+    // DOM elements
+    const svg = document.getElementById('network-graph');
+    const loading = document.getElementById('loading');
+    const tooltip = document.getElementById('tooltip');
+    const tabs = document.querySelectorAll('.tab');
+    
+    let activeNetwork = 'domestic';
+    let simulation = null;
+    
+    // Initialize the visualization
+    function initializeVisualization() {
+      // Show loading
+      loading.style.display = 'flex';
+      svg.style.display = 'none';
+      
+      // Clear previous graph
+      d3.select(svg).selectAll('*').remove();
+      
+      // Get network data based on active tab
+      const networkData = activeNetwork === 'domestic' ? domesticNetwork : internationalNetwork;
+      
+      // Hide loading, show SVG
+      setTimeout(() => {
+        loading.style.display = 'none';
+        svg.style.display = 'block';
+        
+        // Create the visualization
+        createNetworkGraph(networkData);
+      }, 500);
+    }
+    
+    // Create network graph
+    function createNetworkGraph(data) {
+      const width = svg.clientWidth;
+      const height = svg.clientHeight;
+      
+      // Create a group for zoom/pan
+      const g = d3.select(svg).append('g');
+      
+      // Add zoom behavior
+      const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform);
+        });
+      
+      d3.select(svg).call(zoom);
+      
+      // Create links
+      const links = g.selectAll('.link')
+        .data(data.links)
+        .enter()
+        .append('line')
+        .attr('class', 'link')
+        .attr('stroke', d => d.relationship === 'ally' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)')
+        .attr('stroke-width', d => d.weight * 2);
+      
+      // Create nodes
+      const nodes = g.selectAll('.node')
+        .data(data.nodes)
+        .enter()
+        .append('circle')
+        .attr('class', 'node')
+        .attr('r', d => {
+          if (d.id === 'Vladimir Putin') return 25;
+          return 10 + (d.influence_score * 15);
+        })
+        .attr('fill', d => {
+          if (d.id === 'Vladimir Putin') return '#f1c40f'; // Gold for Putin
+          return d.type === 'ally' ? '#4CAF50' : '#F44336'; // Green for allies, Red for adversaries
+        })
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2)
+        .style('cursor', 'pointer')
+        .on('mouseover', function(event, d) {
+          // Show tooltip
+          tooltip.style.left = (event.pageX + 10) + 'px';
+          tooltip.style.top = (event.pageY - 10) + 'px';
+          tooltip.style.opacity = 1;
+          
+          // Set tooltip content
+          tooltip.innerHTML = `
+            <h3>${d.id}</h3>
+            <div class="tooltip-content">
+              <p><span class="label">Role:</span> ${d.role || 'Unknown'}</p>
+              <p><span class="label">Type:</span> ${d.type === 'ally' ? 'Ally' : 'Adversary'}</p>
+              ${d.country ? `<p><span class="label">Country:</span> ${d.country}</p>` : ''}
+              <p><span class="label">Influence Score:</span> <span class="score">${d.influence_score}</span></p>
+              <p><span class="label">Centrality:</span> ${d.degree_centrality}</p>
+              ${d.description ? `<p><span class="label">Info:</span> ${d.description}</p>` : ''}
+            </div>
+          `;
+          
+          // Highlight node and connected links
+          d3.select(this)
+            .attr('stroke', '#f1c40f')
+            .attr('stroke-width', 3);
+          
+          links
+            .attr('stroke-width', l => (l.source.id === d.id || l.target.id === d.id) ? 4 : l.weight * 2)
+            .attr('stroke-opacity', l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.3);
+        })
+        .on('mouseout', function() {
+          // Hide tooltip
+          tooltip.style.opacity = 0;
+          
+          // Reset node and links
+          d3.select(this)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2);
+          
+          links
+            .attr('stroke-width', l => l.weight * 2)
+            .attr('stroke-opacity', 0.3);
+        })
+        .call(d3.drag()
+          .on('start', dragstarted)
+          .on('drag', dragged)
+          .on('end', dragended));
+      
+      // Add labels
+      const labels = g.selectAll('.label')
+        .data(data.nodes)
+        .enter()
+        .append('text')
+        .attr('class', 'label')
+        .text(d => d.id)
+        .attr('font-size', d => d.id === 'Vladimir Putin' ? '14px' : '10px')
+        .attr('fill', '#fff')
+        .attr('text-anchor', 'middle')
+        .attr('dy', d => d.id === 'Vladimir Putin' ? 40 : 25);
+      
+      // Create force simulation
+      simulation = d3.forceSimulation(data.nodes)
+        .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(d => {
+          if (d.id === 'Vladimir Putin') return 40;
+          return 20 + (d.influence_score * 15);
+        }));
+      
+      // Update positions on tick
+      simulation.on('tick', () => {
+        links
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+        
+        nodes
+          .attr('cx', d => d.x)
+          .attr('cy', d => d.y);
+        
+        labels
+          .attr('x', d => d.x)
+          .attr('y', d => d.y);
+      });
+      
+      // Center the graph initially
+      d3.select(svg).call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.8));
+    }
+    
+    // Drag functions
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+    
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+    
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+    
+    // Tab click event
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update active network
+        activeNetwork = tab.dataset.network;
+        
+        // Stop previous simulation
+        if (simulation) simulation.stop();
+        
+        // Initialize visualization with new data
+        initializeVisualization();
+      });
+    });
+    
+    // Initialize on page load
+    window.addEventListener('load', initializeVisualization);
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      if (simulation) simulation.stop();
+      initializeVisualization();
+    });
+  </script>
+</body>
+</html>
