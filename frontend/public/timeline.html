@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Putin Digital Twin - Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #b71c1c;
+      --secondary-color: #2c3e50;
+      --accent-color: #f1c40f;
+      --text-color: #f5f5f5;
+      --background-color: #121212;
+      --card-background: #1e1e1e;
+      --timeline-line-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header {
+      background-color: rgba(18, 18, 18, 0.95);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .logo h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: var(--text-color);
+      font-weight: 700;
+    }
+    
+    .logo span {
+      color: var(--primary-color);
+    }
+    
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    nav a {
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 0.5rem 0;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--primary-color);
+      transition: width 0.3s ease;
+    }
+    
+    nav a:hover {
+      color: var(--primary-color);
+    }
+    
+    nav a:hover::after {
+      width: 100%;
+    }
+    
+    .timeline-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      animation: fadeIn 1s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .timeline-header h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-color);
+      font-weight: 700;
+    }
+    
+    .timeline-header h2 span {
+      color: var(--primary-color);
+    }
+    
+    .timeline-header p {
+      font-size: 1.2rem;
+      color: rgba(245, 245, 245, 0.8);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .filters {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .filter-btn {
+      background-color: var(--card-background);
+      color: var(--text-color);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      padding: 0.5rem 1.5rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(183, 28, 28, 0.3);
+    }
+    
+    .timeline {
+      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .timeline::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      background-color: var(--timeline-line-color);
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      margin-left: -3px;
+    }
+    
+    .timeline-item {
+      padding: 10px 40px;
+      position: relative;
+      background-color: inherit;
+      width: 50%;
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      right: -17px;
+      background-color: var(--card-background);
+      border: 4px solid var(--primary-color);
+      top: 15px;
+      border-radius: 50%;
+      z-index: 1;
+    }
+    
+    .left {
+      left: 0;
+    }
+    
+    .right {
+      left: 50%;
+    }
+    
+    .right::after {
+      left: -16px;
+    }
+    
+    .content {
+      padding: 20px 30px;
+      background-color: var(--card-background);
+      position: relative;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .content h3 {
+      color: var(--text-color);
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .content p {
+      margin: 0;
+      color: rgba(245, 245, 245, 0.8);
+    }
+    
+    .year-marker {
+      position: absolute;
+      top: 15px;
+      right: -60px;
+      color: var(--primary-color);
+      font-weight: bold;
+      font-size: 1rem;
+      z-index: 2;
+    }
+    
+    .right .year-marker {
+      left: -60px;
+    }
+    
+    @media screen and (max-width: 768px) {
+      .timeline::after {
+        left: 31px;
+      }
+      
+      .timeline-item {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 25px;
+      }
+      
+      .timeline-item::after {
+        left: 15px;
+        right: auto;
+      }
+      
+      .left {
+        left: 0;
+      }
+      
+      .right {
+        left: 0;
+      }
+      
+      .right::after {
+        left: 15px;
+      }
+      
+      .year-marker {
+        left: 15px;
+        right: auto;
+      }
+      
+      .right .year-marker {
+        left: 15px;
+      }
+      
+      nav {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">
+        <h1>Putin <span>Digital Twin</span></h1>
+      </div>
+      <nav>
+        <a href="#" class="active">Timeline</a>
+        <a href="#">Network</a>
+        <a href="#">Vulnerabilities</a>
+        <a href="#">Forecast</a>
+      </nav>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="timeline-header">
+      <h2>Vladimir <span>Putin</span>: Key Events Timeline</h2>
+      <p>Explore the critical moments that shaped Vladimir Putin's rise to power and his impact on Russia and global politics from 1999 to present day.</p>
+    </div>
+    
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All Events</button>
+      <button class="filter-btn" data-filter="1990s">1990s</button>
+      <button class="filter-btn" data-filter="2000s">2000s</button>
+      <button class="filter-btn" data-filter="2010s">2010s</button>
+      <button class="filter-btn" data-filter="2020s">2020s</button>
+    </div>
+    
+    <div class="timeline">
+      <!-- Timeline items will be dynamically inserted here -->
+    </div>
+  </div>
+  
+  <script>
+    // Timeline data
+    const timelineEvents = [
+      { 
+        date: 'Dec 31, 1999', 
+        description: 'President Boris Yeltsin resigns and appoints Prime Minister Vladimir Putin as Acting President. Putin soon launches the Second Chechen War, boosting his popularity as a strong leader.', 
+        year: 1999 
+      },
+      { 
+        date: 'Mar 26, 2000', 
+        description: 'Putin wins his first presidential election (53% of vote) and is inaugurated in May. Early in his term, he moves against independent media and oligarchic power, signaling an end to the chaotic 1990s.', 
+        year: 2000 
+      },
+      { 
+        date: 'Oct 25, 2003', 
+        description: 'Oil tycoon Mikhail Khodorkovsky – Russia\'s richest man and a potential political challenger – is arrested. His company Yukos is dismantled and absorbed by state-owned Rosneft, exemplifying Putin\'s strategy of eliminating oligarchs who pose political threats.', 
+        year: 2003 
+      },
+      { 
+        date: 'Mar 14, 2004', 
+        description: 'Putin is re-elected to a second term as President. In September, the Beslan school siege by militants kills 300+ hostages; Putin responds by abolishing regional governor elections, tightening the "vertical of power".', 
+        year: 2004 
+      },
+      { 
+        date: 'Apr 25, 2005', 
+        description: 'Putin calls the Soviet Union\'s collapse "the greatest geopolitical catastrophe of the century," framing his worldview of Russian loss and a desire to restore influence.', 
+        year: 2005 
+      },
+      { 
+        date: 'Feb 10, 2007', 
+        description: 'In a Munich speech, Putin sharply criticizes U.S. unilateralism and NATO expansion, marking a turn toward open confrontation with the West.', 
+        year: 2007 
+      },
+      { 
+        date: 'May 8, 2008', 
+        description: 'Term-limited from a third consecutive term, Putin hands the presidency to Dmitry Medvedev and becomes Prime Minister – but remains the de facto paramount leader. In August 2008, Russia fights a five-day war with Georgia, occupying the breakaway regions of Abkhazia and South Ossetia.', 
+        year: 2008 
+      },
+      { 
+        date: 'Mar 4, 2012', 
+        description: 'Amid anti-government protests in Moscow, Putin returns to the presidency for a now-extended six-year term. His inauguration is followed by laws increasing penalties for protests, presaging a crackdown on dissent.', 
+        year: 2012 
+      },
+      { 
+        date: 'Feb 7–23, 2014', 
+        description: 'Russia hosts the Sochi Winter Olympics as a prestige project. Just days after the Olympics, Ukraine\'s pro-Russian president is ousted in Kyiv; by Feb–Mar 2014, Putin orders covert forces into Crimea and formally annexes the peninsula after a hasty referendum. This is Putin\'s boldest foreign move yet and a turning point in relations with the West.', 
+        year: 2014 
+      },
+      { 
+        date: 'Apr 2014', 
+        description: 'Russian-backed separatist revolt erupts in Eastern Ukraine (Donbas), leading to a protracted conflict. In Feb 2015, opposition leader Boris Nemtsov is assassinated near the Kremlin – silencing a prominent critic amid the wartime patriotic fervor.', 
+        year: 2014 
+      },
+      { 
+        date: 'Sept 30, 2015', 
+        description: 'Putin expands Russia\'s global reach by intervening militarily in the Syrian Civil War, launching airstrikes that prop up ally Bashar al-Assad. This marks Russia\'s return as a Middle East power broker.', 
+        year: 2015 
+      },
+      { 
+        date: 'Mar 18, 2018', 
+        description: 'Putin wins a fourth presidential term. In May, he opens a bridge linking Russia to annexed Crimea, symbolizing the permanence of that territorial gain.', 
+        year: 2018 
+      },
+      { 
+        date: 'July 16, 2018', 
+        description: 'At a summit in Helsinki with U.S. President Donald Trump, Putin denies election interference allegations and finds Trump surprisingly supportive of his denials. By now, Putin\'s Russia faces Western sanctions (initially over Crimea and interference activities) yet continues to engage selectively with Western leaders.', 
+        year: 2018 
+      },
+      { 
+        date: 'Jan 15, 2020', 
+        description: 'Putin proposes constitutional changes that would allow him to run for president again in 2024 and potentially stay in power until 2036. The amendments are approved in a July referendum.', 
+        year: 2020 
+      },
+      { 
+        date: 'Feb 24, 2022', 
+        description: 'Putin launches a full-scale invasion of Ukraine, calling it a "special military operation" to "denazify" the country. The war becomes the largest European conflict since World War II and leads to unprecedented Western sanctions against Russia.', 
+        year: 2022 
+      },
+      { 
+        date: 'Mar 17, 2023', 
+        description: 'The International Criminal Court issues an arrest warrant for Putin for alleged war crimes in Ukraine, specifically the unlawful deportation of children.', 
+        year: 2023 
+      },
+      { 
+        date: 'Mar 17, 2024', 
+        description: 'Putin wins a fifth term as president with a reported 87% of the vote in an election where no genuine opposition candidates were allowed to run.', 
+        year: 2024 
+      }
+    ];
+    
+    // Function to render timeline
+    function renderTimeline(events) {
+      const timelineContainer = document.querySelector('.timeline');
+      timelineContainer.innerHTML = '';
+      
+      events.forEach((event, index) => {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = `timeline-item ${index % 2 === 0 ? 'left' : 'right'}`;
+        timelineItem.setAttribute('data-year', event.year);
+        
+        const content = document.createElement('div');
+        content.className = 'content';
+        
+        const title = document.createElement('h3');
+        title.textContent = event.date;
+        
+        const description = document.createElement('p');
+        description.textContent = event.description;
+        
+        const yearMarker = document.createElement('div');
+        yearMarker.className = 'year-marker';
+        yearMarker.textContent = event.year;
+        
+        content.appendChild(title);
+        content.appendChild(description);
+        timelineItem.appendChild(content);
+        timelineItem.appendChild(yearMarker);
+        
+        timelineContainer.appendChild(timelineItem);
+      });
+    }
+    
+    // Initial render
+    renderTimeline(timelineEvents);
+    
+    // Filter functionality
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Update active button
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        const filter = button.getAttribute('data-filter');
+        let filteredEvents;
+        
+        if (filter === 'all') {
+          filteredEvents = timelineEvents;
+        } else {
+          const decade = parseInt(filter.replace('s', ''));
+          filteredEvents = timelineEvents.filter(event => {
+            return event.year >= decade && event.year < decade + 10;
+          });
+        }
+        
+        renderTimeline(filteredEvents);
+      });
+    });
+    
+    // Add scroll animation
+    window.addEventListener('scroll', () => {
+      const timelineItems = document.querySelectorAll('.timeline-item');
+      timelineItems.forEach(item => {
+        const position = item.getBoundingClientRect();
+        
+        // If the item is in the viewport
+        if (position.top >= 0 && position.bottom <= window.innerHeight) {
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0)';
+        } else {
+          item.style.opacity = '0';
+          item.style.transform = 'translateY(20px)';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
